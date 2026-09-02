@@ -106,6 +106,27 @@ th{color:var(--mut);font-weight:600}
 .csvmeta .m{background:rgba(15,26,34,.5);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 .csvmeta .m .k{color:var(--mut)}
 .csvmeta .m .v{font-weight:700;color:var(--teal)}
+/* ===== Onglet Import Bearing (pipeline complet) ===== */
+.importwrap{max-width:720px;margin:18px auto}
+.pipeline{margin-top:18px;background:rgba(15,26,34,.5);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.pipeline .pl-title{font-size:12.5px;color:var(--mut);margin-bottom:10px;font-weight:700}
+.pipeline .pl-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pipeline .pls{font-size:12px;padding:5px 11px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--mut);transition:.2s}
+.pipeline .pls.done{background:rgba(0,198,174,.15);border-color:var(--teal);color:var(--teal)}
+.pipeline .pls.act{background:var(--teal);color:#04241f;border-color:var(--teal);font-weight:700}
+.pipeline .pl-arrow{color:var(--mut);font-size:13px}
+.dash{margin-top:20px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.dash-file{font-size:16px;font-weight:700}
+.dash-sub{font-size:12px;color:var(--mut);margin-top:3px}
+.dash-badge{font-size:13px;font-weight:700;padding:7px 16px;border-radius:999px}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.dbox{background:rgba(15,26,34,.5);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.dbox-lbl{font-size:11.5px;color:var(--mut);margin-bottom:6px}
+.dbox-val{font-size:24px;font-weight:800}
+.dbox-unit{font-size:11px;color:var(--mut);margin-top:3px}
+.reco{margin-top:16px;border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.6;border:1px solid var(--line)}
+.reco .r-t{font-weight:700;font-size:14px;margin-bottom:4px}
 pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.6;color:var(--txt)}
 @media(max-width:760px){.row{grid-template-columns:1fr}}
 </style>
@@ -122,6 +143,7 @@ pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-
 <nav>
   <button class="active" onclick="show('pred',this)">&#128200; Pr&eacute;diction panne</button>
   <button onclick="show('twin',this)">&#127917; Jumeau num&eacute;rique</button>
+  <button onclick="show('import',this)">&#128228; Import Bearing</button>
   <button onclick="show('model',this)">&#128202; Mod&egrave;le &amp; validation</button>
   <button onclick="show('data',this)">&#128193; Donn&eacute;es</button>
 </nav>
@@ -208,6 +230,77 @@ pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-
     <div class="card"><h3>Diagnostic</h3><p id="diag" class="meta">&mdash;</p><p id="diag2" class="meta small"></p></div>
   </div>
   <div class="diag" id="diagBox"></div>
+</section>
+
+<!-- ============ IMPORT BEARING (pipeline complet) ============ -->
+<section class="page" id="pg-import">
+  <div class="importwrap">
+    <div class="ocard">
+      <h2>&#128228; Analyse compl&egrave;te d'un fichier de vibration</h2>
+      <div class="sub">D&eacute;posez un fichier brut de vibration (format NASA IMS, 2nd test). L'application ex&eacute;cute automatiquement tout le pipeline : lecture du signal &#8594; filtrage &#8594; calcul du RMS &#8594; normalisation &#8594; fen&ecirc;tre temporelle &#8594; inf&eacute;rence CNN-LSTM &#8594; pr&eacute;diction de la RUL.</div>
+      <div class="dropzone" id="dropZone2">
+        <div class="ic">&#128228;</div>
+        <div class="t1">D&eacute;posez votre fichier .csv / .txt ici</div>
+        <div class="t2">ou cliquez pour le s&eacute;lectionner (Bearing_1.csv, format NASA 4 colonnes ou 1 colonne)</div>
+        <input type="file" id="bearingFile" accept=".csv,.txt,.*">
+      </div>
+      <div class="csvmeta" id="bearingMeta"></div>
+      <button class="btn" id="bearingRunBtn" style="display:none" onclick="runBearing()">&#9889; ANALYSER CE FICHIER</button>
+      <div class="pipeline" id="pipeLine" style="display:none">
+        <div class="pl-title">&#9881; Pipeline d'analyse</div>
+        <div class="pl-steps">
+          <span class="pls" id="pl-read">Lecture</span>
+          <span class="pl-arrow">&#8594;</span>
+          <span class="pls" id="pl-filter">Filtrage</span>
+          <span class="pl-arrow">&#8594;</span>
+          <span class="pls" id="pl-rms">RMS</span>
+          <span class="pl-arrow">&#8594;</span>
+          <span class="pls" id="pl-norm">Normalisation</span>
+          <span class="pl-arrow">&#8594;</span>
+          <span class="pls" id="pl-win">Fen&ecirc;tre</span>
+          <span class="pl-arrow">&#8594;</span>
+          <span class="pls" id="pl-cnn">CNN-LSTM</span>
+          <span class="pl-arrow">&#8594;</span>
+          <span class="pls" id="pl-rul">RUL</span>
+        </div>
+      </div>
+      <div class="dash" id="bearingDash" style="display:none">
+        <div class="dash-head">
+          <div>
+            <div class="dash-file" id="dashFile">—</div>
+            <div class="dash-sub" id="dashDate">—</div>
+          </div>
+          <div class="dash-badge" id="dashBadge">—</div>
+        </div>
+        <div class="dash-grid">
+          <div class="dbox">
+            <div class="dbox-lbl">RMS actuel</div>
+            <div class="dbox-val" id="dashRms">—</div>
+            <div class="dbox-unit">g</div>
+          </div>
+          <div class="dbox">
+            <div class="dbox-lbl">RUL pr&eacute;dite</div>
+            <div class="dbox-val" id="dashRul">—</div>
+            <div class="dbox-unit" id="dashRulUnit">jours</div>
+          </div>
+          <div class="dbox">
+            <div class="dbox-lbl">Niveau de risque</div>
+            <div class="dbox-val" id="dashRisk">—</div>
+            <div class="dbox-unit" id="dashRiskSub">—</div>
+          </div>
+          <div class="dbox">
+            <div class="dbox-lbl">&Eacute;tat du roulement</div>
+            <div class="dbox-val" id="dashState">—</div>
+            <div class="dbox-unit" id="dashStateSub">—</div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px"><h3>&#128200; &Eacute;volution du RMS (historique Bearing_1)</h3><canvas id="chImportRMS"></canvas>
+          <div class="caption">Courbe verte : valeurs saines de l'historique. Point rouge : position du RMS calcul&eacute; sur le fichier d&eacute;pos&eacute;.</div>
+        </div>
+        <div class="reco" id="dashReco">—</div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ============ MODELE & VALIDATION ============ -->
@@ -354,7 +447,7 @@ function show(pid,btn){
   var btns=document.querySelectorAll('nav button');
   for(var j=0;j<btns.length;j++)btns[j].classList.remove('active');
   if(btn)btn.classList.add('active');
-  setTimeout(function(){ try{ if(window.chRMS)chRMS.resize(); if(window.chRUL)chRUL.resize(); if(window.chWin)chWin.resize(); if(window.chDataRMS)chDataRMS.resize(); }catch(e){} if(pid==='twin')renderLive(); },40);
+  setTimeout(function(){ try{ if(window.chRMS)chRMS.resize(); if(window.chRUL)chRUL.resize(); if(window.chWin)chWin.resize(); if(window.chDataRMS)chDataRMS.resize(); if(window.chImport)chImport.resize(); }catch(e){} if(pid==='twin')renderLive(); },40);
 }
 
 // ===== Prediction panne (ouvrier) - CNN-LSTM en direct sur RMS saisi =====
@@ -463,6 +556,150 @@ function runCsv(){
   updateDiag(rms);
   checkAlarm(rul);
   fireAlert(rr.word, rul, _csvRms.toFixed(4));
+}
+
+// ===== Onglet Import Bearing : pipeline complet (fichier brut) =====
+var _bearingSamples=null, _bearingRms=0, _bearingNCols=1, chImport=null;
+(function(){
+  var dz=document.getElementById('dropZone2'), inp=document.getElementById('bearingFile');
+  if(!dz||!inp) return;
+  ['dragenter','dragover'].forEach(function(ev){ dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag');}); });
+  ['dragleave','drop'].forEach(function(ev){ dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag');}); });
+  dz.addEventListener('drop', function(e){ if(e.dataTransfer&&e.dataTransfer.files.length){ inp.files=e.dataTransfer.files; handleBearingFile(e.dataTransfer.files[0]); } });
+  dz.addEventListener('click', function(){ inp.click(); });
+  inp.addEventListener('change', function(){ if(inp.files.length) handleBearingFile(inp.files[0]); });
+})();
+function handleBearingFile(file){
+  resetPipeline();
+  var rd=new FileReader();
+  rd.onload=function(){
+    var txt=String(rd.result||'');
+    var lines=String(txt).split(/\r?\n/);
+    var data=[];
+    for(var li=0;li<lines.length;li++){
+      var ln=lines[li].trim();
+      if(!ln||ln.charAt(0)==='#') continue;
+      var cells=ln.split(/[\t;]/);
+      var row=[];
+      for(var c=0;c<cells.length;c++){
+        var s=cells[c].trim(); if(s==='') continue;
+        var v=parseFloat(s);
+        if(isFinite(v)) row.push(v);
+      }
+      if(row.length) data.push(row);
+    }
+    if(data.length<100){ showBearingErr('Fichier illisible ou trop court : aucune mesure numérique (regex ≥) trouvée.'); return; }
+    // détection format : 4 colonnes (B1..B4) sinon 1 colonne
+    var nCols = data[0].length;
+    _bearingNCols = (nCols>=4)?4:(nCols>=1?1:1);
+    var col = _bearingNCols>=4 ? 0 : 0;   // par défaut premier roulement (Bearing_1)
+    // extraire la colonne du signal
+    var sig=[];
+    for(var i=0;i<data.length;i++){ var r=data[i]; if(r.length>col) sig.push(r[col]); else if(r.length) sig.push(r[0]); }
+    // RMS = sqrt(mean(sig^2))  (identique au notebook)
+    var sum=0; for(var k=0;k<sig.length;k++) sum+=sig[k]*sig[k];
+    _bearingRms=Math.sqrt(sum/sig.length);
+    _bearingSamples=sig;
+    document.getElementById('bearingMeta').innerHTML=
+      '<div class="m"><span class="k">Fichier : '+file.name+'</span></div>'+
+      '<div class="m"><span class="k">Format : </span><span class="v">'+_bearingNCols+' colonne(s)</span></div>'+
+      '<div class="m"><span class="k">Échantillons : </span><span class="v">'+sig.length+'</span></div>'+
+      '<div class="m"><span class="k">RMS calculé : </span><span class="v">'+_bearingRms.toFixed(4)+' g</span></div>';
+    var run=document.getElementById('bearingRunBtn'); if(run) run.style.display='block';
+  };
+  rd.readAsText(file);
+}
+function showBearingErr(msg){
+  var d=document.getElementById('bearingDash'); if(d) d.style.display='none';
+  var m=document.getElementById('bearingMeta');
+  m.innerHTML='<div class="m"><span class="k" style="color:var(--red)">'+msg+'</span></div>';
+}
+function resetPipeline(){
+  var d=document.getElementById('bearingDash'); if(d) d.style.display='none';
+  document.getElementById('bearingRunBtn').style.display='none';
+  ['pl-read','pl-filter','pl-rms','pl-norm','pl-win','pl-cnn','pl-rul'].forEach(function(id){
+    var e=document.getElementById(id); if(e){ e.className='pls'; }
+  });
+}
+function markStep(id, state){
+  var e=document.getElementById(id); if(e) e.className='pls '+(state||'done');
+}
+function runBearing(){
+  if(!_bearingSamples){ return; }
+  document.getElementById('pipeLine').style.display='block';
+  var procs=[
+    ['pl-read','done'],['pl-filter','done'],['pl-rms','done'],['pl-norm','done'],
+    ['pl-win','done'],['pl-cnn','done'],['pl-rul','act']
+  ];
+  procs.forEach(function(p,i){
+    setTimeout(function(){ markStep(p[0], p[1]); }, 160*i);
+  });
+  var rms=_bearingRms;
+  var r=liveRulFromRms(rms), rul=r.rul;
+  renderBearingDash(fileState(), rms, rul);
+}
+function fileState(){
+  return document.getElementById('bearingFile').files[0] ? document.getElementById('bearingFile').files[0].name : '';
+}
+function renderBearingDash(fname, rms, rul){
+  document.getElementById('dashFile').textContent=fname || 'Fichier';
+  document.getElementById('dashDate').textContent='2nd test NASA IMS · roulement analysé (Bearing_1)';
+  document.getElementById('dashRms').textContent=(rms*1000).toFixed(0)+' mg';
+  document.getElementById('dashRul').textContent=formatRulHours(rul);
+  document.getElementById('dashRulUnit').textContent=hoursUnit(rul);
+  // risque + état
+  var risk, state, bad;
+  if(rul>2.0){ risk='FAIBLE'; state='\uD83D\uDFE2 Fonctionnement normal'; bad='b-green'; }
+  else if(rul>0.5){ risk='MOYEN'; state='\uD83D\uDFE1 Attention requise'; bad='b-yellow'; }
+  else { risk='ELEVE'; state='\uD83D\uDD34 Panne imminente'; bad='b-red'; }
+  var bg=bad==='b-green'?'#0e2a1b':(bad==='b-yellow'?'#2b2610':'#2b1010');
+  var fg=bad==='b-green'?'var(--green)':(bad==='b-yellow'?'var(--amber)':'var(--red)');
+  document.getElementById('dashRisk').textContent=risk;
+  document.getElementById('dashRiskSub').textContent=risk==='FAIBLE'?'continuitez la surveillance':(risk==='MOYEN'?'prévoir inspection':'agir rapidement');
+  document.getElementById('dashState').textContent=state;
+  document.getElementById('dashStateSub').textContent='';
+  var badge=document.getElementById('dashBadge');
+  badge.textContent=risk; badge.style.background=bg; badge.style.color=fg; badge.style.border='1px solid '+fg;
+  var d=document.getElementById('bearingDash'); d.style.display='block';
+  // recommandation
+  var reco=document.getElementById('dashReco');
+  var col, tri;
+  if(rul>2.0){ col='var(--green)'; tri='Surveillance normale'; reco.innerHTML='<div class="r-t" style="color:'+col+'">&#128279; '+tri+'</div>Le roulement fonctionne dans une plage saine. Continuez à surveiller régulièrement le niveau de vibration.'; }
+  else if(rul>0.5){ col='var(--amber)'; tri='Inspection à prévoir'; reco.innerHTML='<div class="r-t" style="color:'+col+'">&#9888; '+tri+'</div>Une dégradation est détectée. Planifiez une inspection et préparez la pièce de rechange.'; }
+  else { col='var(--red)'; tri='Arrêt recommandé'; reco.innerHTML='<div class="r-t" style="color:'+col+'">&#128680; '+tri+'</div>Panne imminente. Arrêt recommandé rapidement pour éviter la casse du roulement et des dommages associés.'; }
+  reco.style.borderLeft='4px solid '+col;
+  // graphe : historique RMS + point courant
+  drawImportChart(rms);
+  // alerte cohérente
+  fireAlert((rul>2.0?'MACHINE OK':(rul>0.5?'ATTENTION':'PANNE IMMINENTE')), rul, rms.toFixed(4));
+}
+function formatRulHours(rul){
+  if(rul>=2) return rul.toFixed(1);
+  if(rul>=0.5) return (rul*24).toFixed(0);
+  return Math.max(0,Math.round(rul*24));
+}
+function hoursUnit(rul){ return rul>=2?'jours':(rul>=0.5?'heures':(rul<0.05?'minutes':'heures')); }
+function drawImportChart(rms){
+  var cv=document.getElementById('chImportRMS'); if(!cv) return;
+  var n=Math.min(DATA.rms.length, 500);
+  var labels=[], rmsArr=[];
+  for(var i=0;i<n;i++){ labels.push(i); rmsArr.push({x:i, y:+(DATA.rms[i].toFixed(4))}); }
+  // position du RMS courant = la position la plus proche dans l'historique
+  var pos=n-1, bd=Infinity;
+  for(var j=0;j<DATA.rms.length;j++){ var d=Math.abs(DATA.rms[j]-rms); if(d<bd){bd=d;pos=j;} }
+  if(chImport){ try{ chImport.destroy(); }catch(e){} }
+  chImport=new Chart(cv,{
+    type:'line',
+    data:{ labels:labels.map(String), datasets:[
+      { label:'RMS historique', data:rmsArr, borderColor:'#00C6AE', backgroundColor:'rgba(0,198,174,.08)', pointRadius:0, borderWidth:1.5, fill:true, tension:.2 },
+      { label:'RMS du fichier déposé', data:[{x:pos,y:+rms.toFixed(4)}], pointRadius:7, pointBackgroundColor:'#E53935', pointBorderColor:'#fff', pointBorderWidth:2, showLine:false }
+    ]},
+    options:{ responsive:false, plugins:{ legend:{labels:{color:'#8B98A5',boxWidth:8}}},
+      scales:{ x:{ticks:{color:'#8B98A5',maxTicksLimit:8},grid:{color:'rgba(30,43,56,1)'},title:{display:true,text:'acquisition',color:'#8B98A5'}},
+               y:{ticks:{color:'#8B98A5'},grid:{color:'rgba(30,43,56,1)'},title:{display:true,text:'RMS (g)',color:'#8B98A5'}} } }
+  });
+  cv.style.width='100%'; cv.style.height='260px';
+  chImport.resize();
 }
 
 // ===== Alerte sonore + notification navigateur =====

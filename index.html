@@ -82,11 +82,11 @@ canvas{max-width:100%}
     <div class="op-panel">
       <h3 class="op-h">&#128194; DONN&Eacute;ES DE VIBRATION</h3>
       <div class="op-filebar">
-        <input type="file" id="opFiles" class="op-fileinput" accept=".txt,.csv" webkitdirectory multiple>
+        <input type="file" id="opFiles" class="op-fileinput" webkitdirectory multiple>
         <button class="btn op-filebtn" onclick="document.getElementById('opFiles').click()">&#128228; S&eacute;lectionner les fichiers de vibration</button>
       </div>
       <div class="op-delt" id="opDelt" style="display:none">
-        <div class="op-ok">&#9989; <b id="opDeltN">0</b> acquisitions d&eacute;tect&eacute;es</div>
+        <div class="op-ok">&#9989; <b id="opDeltN">0</b> acquisitions analys&eacute;es</div>
         <div class="op-ok">&#9989; <b id="opDeltM">0</b> mesures / acquisition</div>
       </div>
       <div class="op-none" id="opNone" style="display:none">Chargement des fichiers &#8230;</div>
@@ -106,12 +106,12 @@ canvas{max-width:100%}
         <div class="okpi">
           <div class="okpi-lbl">RMS actuel</div>
           <div class="okpi-val" id="opRms">&mdash;</div>
-          <div class="okpi-unit">g</div>
+          <div class="okpi-unit">acc&eacute;l&eacute;ration</div>
         </div>
         <div class="okpi">
           <div class="okpi-lbl">RUL estim&eacute;e</div>
           <div class="okpi-val" id="opRul">&mdash;</div>
-          <div class="okpi-unit">jour</div>
+          <div class="okpi-unit" id="opRulUnit">jour(s)</div>
         </div>
         <div class="okpi">
           <div class="okpi-lbl">Niveau de risque</div>
@@ -266,7 +266,9 @@ function renderSummary(rms, rul){
   document.getElementById('opStatusTxt').textContent=s[1];
   document.getElementById('opStatus').className='op-status '+s[2];
   document.getElementById('opRms').textContent=fmtFR(rms.toFixed(4));
-  document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2));
+  var hh=Math.round(rul*24*10)/10;
+  document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2))+' j (&asymp; '+fmtFR(hh)+' h)';
+  document.getElementById('opRulUnit').textContent='';
   document.getElementById('opRisk').textContent=s[3];
   document.getElementById('opRecoIc').textContent=s[0];
   if(rul<=0.1){ document.getElementById('opRecoT').textContent='Panne imminente.'; document.getElementById('opRecoD').textContent='Arr\u00EAt recommand\u00E9 rapidement pour \u00E9viter la casse du roulement.'; }
@@ -288,8 +290,10 @@ function drawCharts(rmsSerie, preds, labels, trueRul){
   ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
 }
 function runOp(){
-  var rms=_opRmsSerie, preds=_opPreds, trueR=_opTrue;
-  if(!rms||!rms.length||!preds){ var btn=document.getElementById('opAnalyseBtn'); if(btn)btn.disabled=true; return; }
+  var rms=_opRmsSerie;
+  if(!rms||!rms.length){ var btn=document.getElementById('opAnalyseBtn'); if(btn)btn.disabled=true; return; }
+  if(!_opPreds) _opPreds=inferSerie(rms, OFFSET);
+  var preds=_opPreds, trueR=_opTrue;
   var labels=DATA.dates.slice(0, rms.length);
   // point representatif = maximum de degradation atteint
   var im=0, mx=-1; for(var i=0;i<rms.length;i++){ if(rms[i]>mx){mx=rms[i];im=i;} }
@@ -338,11 +342,81 @@ function handleFolderFiles(files){
   }
 }
 function computeMoy(){ return '20 480'; }
+var _impAbort=false, _impBatch=6;
+function handleFolderFiles(files){
+  _impAbort=false;
+  var list=[];
+  for(var i=0;i<files.length;i++) list.push(files[i]);
+  if(!list.length){ setErr('Aucun fichier trouv&eacute;. S&eacute;lectionnez le dossier 2nd_test contenant les 984 fichiers.'); return; }
+  // tri lexicographique (noms = dates ISO => ordre chronologique)
+  list.sort(function(a,b){ return a.name===b.name?0:(a.name<b.name?-1:1); });
+  // ne garder que les fichiers "acquisition" (nom = timestamp aaaa.mm.dd.hh.mm.ss) issues du 2nd_test
+  list = list.filter(function(f){
+    var n=(f.name||'').replace(/\s+/g,'');
+    return /^\d{4}\.\d{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}$/.test(n) || /^\d+\.\d+\.\d+\.\d+\.\d+\.\d+$/.test(n);
+  });
+  if(!list.length){ setErr('Aucune acquisition reconnue. S&eacute;lectionnez le dossier 2nd_test (984 fichiers commen&ccedil;ant par 2004.02.12...).'); return; }
+  // limiter a la serie de reference (984 acquisitions Bearing_1)
+  var TARGET=984;
+  if(list.length>TARGET) list=list.slice(0,TARGET);
+  var delt=document.getElementById('opDelt');
+  if(delt){ delt.style.display='block'; delt.style.opacity=.8; }
+  document.getElementById('opDeltN').textContent='0 / '+list.length;
+  var btn0=document.getElementById('opAnalyseBtn');
+  if(btn0){ btn0.style.display='inline-flex'; btn0.disabled=true; }
+  var none=document.getElementById('opNone');
+  if(none){ none.style.display='block'; none.textContent='Lecture des fichiers en cours &#8230;'; }
+  var rms=[], done=0, idx=0;
+  function tick(){
+    document.getElementById('opDeltN').textContent=done+' / '+list.length;
+    if(none)none.textContent='Lecture des fichiers en cours &#8230; ('+done+'/'+list.length+')';
+  }
+  function readChunk(){
+    var grabbed=0;
+    while(idx<list.length && grabbed<_impBatch){
+      var f=list[idx]; var fi=idx; idx++; grabbed++;
+      f.text().then(function(txt){
+        rms[fi]=computeRmsTxt(txt); done++;
+        if(done%25===0 || done===list.length) tick();
+        pump();
+      }).catch(function(){
+        rms[fi]=0; done++;
+        if(done%25===0 || done===list.length) tick();
+        pump();
+      });
+    }
+  }
+  function pump(){
+    if(_impAbort) return;
+    if(done>=list.length){ finishImport(rms); return; }
+    // relancer si le lot n'&eacute;tait pas plein et que tout a fini
+    if(done<idx || idx<list.length) readChunk();
+  }
+  readChunk();
+  function finishImport(serie){
+    _opRmsSerie=serie;
+    _opPreds=null; _opTrue=null;
+    // presentation coefficient xx/100 max degradation (compacter la serie)
+    var stepped=serie;
+    document.getElementById('opDeltN').textContent=serie.length;
+    document.getElementById('opDeltM').textContent=computeMoy();
+    if(none)none.style.display='none';
+    if(delt)delt.style.opacity=1;
+    if(btn0){ btn0.style.display='inline-flex'; btn0.disabled=false; }
+    var res=document.getElementById('opResults'); if(res)res.style.display='block';
+    runOp();
+  }
+}
+function setErr(msg){
+  var none=document.getElementById('opNone');
+  if(none){ none.style.display='block'; none.style.color='#e53935'; none.textContent=msg; }
+}
 (function(){
   var inp=document.getElementById('opFiles');
   if(!inp) return;
   inp.addEventListener('change', function(){
-    if(!inp.files || !inp.files.length) return;
+    setErr('');
+    if(!inp.files || !inp.files.length){ setErr('Aucun fichier trouv&eacute; dans le dossier s&eacute;lectionn&eacute;.'); return; }
     handleFolderFiles(inp.files);
   });
 })();

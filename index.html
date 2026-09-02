@@ -52,7 +52,8 @@ canvas{max-width:100%}
 .okpi-val{font-size:28px;font-weight:800;color:#fff}
 .okpi-risk{color:#ffb300}
 .okpi-unit{font-size:12px;color:var(--mut);margin-top:4px}
-.op-chart canvas{width:100%!important;height:auto!important;max-height:300px;min-height:280px}
+.op-chart{position:relative;height:300px}
+.op-chart canvas{display:block;width:100%!important;height:100%!important}
 .op-reco{display:flex;gap:14px;align-items:center;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.3);border-radius:12px;padding:16px}
 .op-reco-ic{font-size:30px}
 .op-reco-t{font-weight:800;font-size:15px;color:#ffb300}
@@ -251,7 +252,9 @@ function inferSerie(rmsSerie, off){
   var preds=[];
   for(var p=0;p<rmsSerie.length-off;p++){
     var w=rmsSerie.slice(p, p+off+1);
-    preds.push(Math.max(0, modelForward(w, MODEL_WEIGHTS)));
+    var v=modelForward(w, MODEL_WEIGHTS);
+    if(!isFinite(v)||isNaN(v)) v=0;
+    preds.push(Math.max(0, v));
   }
   return preds;
 }
@@ -277,32 +280,47 @@ function renderSummary(rms, rul){
 }
 function drawCharts(rmsSerie, preds, labels, trueRul){
   var off=OFFSET, Nn=rmsSerie.length;
+  var elRms=document.getElementById('opRmsChart'); var elRul=document.getElementById('opRulChart');
   if(chOpRms)chOpRms.destroy(); if(chOpRul)chOpRul.destroy();
-  chOpRms=new Chart(document.getElementById('opRmsChart'),{type:'line',data:{labels:labels,datasets:[
-    {label:'RMS',data:rmsSerie,borderColor:'#00C6AE',backgroundColor:'rgba(0,198,174,.08)',fill:true,borderWidth:1.6,pointRadius:0,tension:.15},
+  chOpRms=chOpRul=null;
+  if(!elRms||!elRul) return;
+  // garde-fou NaN/valeurs manquantes
+  var crms=rmsSerie.map(function(x){ return (isNaN(x)||!isFinite(x))?0:x; });
+  var cpr=preds.map(function(x){ return (isNaN(x)||!isFinite(x))?0:Math.max(0,x); });
+  chOpRms=new Chart(elRms,{type:'line',data:{labels:labels,datasets:[
+    {label:'RMS',data:crms,borderColor:'#00C6AE',backgroundColor:'rgba(0,198,174,.08)',fill:true,borderWidth:1.6,pointRadius:0,tension:.15},
     {label:'Seuil alerte',data:nullArr(Nn).fill(ALERT),borderColor:'#FFB300',borderDash:[7,5],borderWidth:1.5,pointRadius:0}
-  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
   var rulLabels=labels.slice(off);
-  var tr=nullArr(preds.length); if(trueRul){ for(var j=0;j<preds.length;j++)tr[j]=trueRul[j]; }
-  chOpRul=new Chart(document.getElementById('opRulChart'),{type:'line',data:{labels:rulLabels,datasets:[
-    {label:'RUL pr\u00E9dite',data:preds,borderColor:'#4FC3F7',backgroundColor:'rgba(79,195,247,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.1},
+  var tr=nullArr(cpr.length); if(trueRul){ for(var j=0;j<cpr.length;j++)tr[j]=(isNaN(trueRul[j])||!isFinite(trueRul[j]))?null:trueRul[j]; }
+  chOpRul=new Chart(elRul,{type:'line',data:{labels:rulLabels,datasets:[
+    {label:'RUL pr\u00E9dite',data:cpr,borderColor:'#4FC3F7',backgroundColor:'rgba(79,195,247,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.1},
     {label:'RUL r\u00E9elle',data:tr,borderColor:'#8B98A5',borderDash:[5,5],borderWidth:1.4,pointRadius:0}
-  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
 }
 function runOp(){
-  var rms=_opRmsSerie;
-  if(!rms||!rms.length){ var btn=document.getElementById('opAnalyseBtn'); if(btn)btn.disabled=true; return; }
-  if(!_opPreds) _opPreds=inferSerie(rms, OFFSET);
-  var preds=_opPreds, trueR=_opTrue;
-  var labels=DATA.dates.slice(0, rms.length);
-  // point representatif = maximum de degradation atteint
-  var im=0, mx=-1; for(var i=0;i<rms.length;i++){ if(rms[i]>mx){mx=rms[i];im=i;} }
-  var pk=im-OFFSET;
-  // RUL prete : prolonger preds si besoin (petite serie)
-  var ruling=preds.length? Math.max(0,preds[Math.min(pk,preds.length-1)]) : 0;
-  var btn2=document.getElementById('opAnalyseBtn'); if(btn2)btn2.disabled=false;
-  drawCharts(rms, preds, labels, trueR);
-  renderSummary(rms[im]||0, ruling);
+  try{
+    var rms=_opRmsSerie;
+    if(!rms||!rms.length){ var btn=document.getElementById('opAnalyseBtn'); if(btn)btn.disabled=true; return; }
+    // nettoyer NaN dans la serie
+    for(var k=0;k<rms.length;k++){ if(isNaN(rms[k])||!isFinite(rms[k])) rms[k]=0; }
+    if(!_opPreds) _opPreds=inferSerie(rms, OFFSET);
+    var preds=_opPreds, trueR=_opTrue;
+    var labels=DATA.dates.slice(0, rms.length);
+    // point representatif = maximum de degradation atteint
+    var im=0, mx=-1; for(var i=0;i<rms.length;i++){ if(rms[i]>mx){mx=rms[i];im=i;} }
+    var pk=im-OFFSET;
+    // RUL prete : prolonger preds si besoin (petite serie)
+    var ruling=preds.length? Math.max(0,preds[Math.min(pk,preds.length-1)]) : 0;
+    if(isNaN(ruling)||!isFinite(ruling)) ruling=0;
+    var btn2=document.getElementById('opAnalyseBtn'); if(btn2)btn2.disabled=false;
+    drawCharts(rms, preds, labels, trueR);
+    renderSummary(rms[im]||0, ruling);
+    // re-taille differee pour garantir le rendu du canvas apres l'affichage
+    setTimeout(function(){ if(chOpRms)chOpRms.resize(); if(chOpRul)chOpRul.resize(); }, 120);
+  }catch(e){
+    setErr('Erreur d’analyse : '+e.message);
+  }
 }
 function handleFolderFiles(files){
   var list=[];

@@ -127,6 +127,7 @@ th{color:var(--mut);font-weight:600}
 .dbox-unit{font-size:11px;color:var(--mut);margin-top:3px}
 .reco{margin-top:16px;border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.6;border:1px solid var(--line)}
 .reco .r-t{font-weight:700;font-size:14px;margin-bottom:4px}
+.pipeline.pgtwin{margin:14px auto 0;max-width:1000px}
 pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.6;color:var(--txt)}
 @media(max-width:760px){.row{grid-template-columns:1fr}}
 </style>
@@ -206,6 +207,24 @@ pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-
 
 <!-- ============ JUMEAU NUMERIQUE ============ -->
 <section class="page" id="pg-twin">
+  <div class="pipeline pgtwin">
+    <div class="pl-title">&#128202; Cha&icirc;ne du jumeau num&eacute;rique &mdash; 2nd Test NASA IMS &middot; Bearing_1 (canal 1)</div>
+    <div class="pl-steps">
+      <span class="pls" data-pl="acq">984 acquisitions</span>
+      <span class="pl-arrow">&#8594;</span>
+      <span class="pls" data-pl="sig">Signal vibration</span>
+      <span class="pl-arrow">&#8594;</span>
+      <span class="pls" data-pl="rms">RMS</span>
+      <span class="pl-arrow">&#8594;</span>
+      <span class="pls" data-pl="norm">Normalisation</span>
+      <span class="pl-arrow">&#8594;</span>
+      <span class="pls" data-pl="win">Fen&ecirc;tre 50</span>
+      <span class="pl-arrow">&#8594;</span>
+      <span class="pls" data-pl="cnn">CNN-LSTM</span>
+      <span class="pl-arrow">&#8594;</span>
+      <span class="pls" data-pl="rul">RUL pr&eacute;dite</span>
+    </div>
+  </div>
   <div class="controls">
     <button id="playBtn" onclick="togglePlay()">&#9654; Lecture</button>
     <button class="alt" onclick="resetPlay()">&#9889; D&eacute;but</button>
@@ -213,6 +232,21 @@ pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-
     <button class="alt" id="modeBtn" onclick="swapMode()">Vitesse : &#128640;</button>
   </div>
   <div class="meta" id="metaLine">&mdash;</div>
+  <div class="dash" id="twinDash" style="display:block">
+    <div class="dash-head">
+      <div>
+        <div class="dash-file">JUMEAU NUM&Eacute;RIQUE &mdash; BEARING 1</div>
+        <div class="dash-sub" id="twinMeta">2nd Test NASA IMS &middot; canal 1</div>
+      </div>
+      <div class="dash-badge" id="twinBadge">Nominal</div>
+    </div>
+    <div class="dash-grid">
+      <div class="dbox"><div class="dbox-lbl">RMS actuel</div><div class="dbox-val" id="twinRms">—</div><div class="dbox-unit">mg</div></div>
+      <div class="dbox"><div class="dbox-lbl">RUL pr&eacute;dite</div><div class="dbox-val" id="twinRul">—</div><div class="dbox-unit" id="twinRulUnit">jours</div></div>
+      <div class="dbox"><div class="dbox-lbl">Niveau de risque</div><div class="dbox-val" id="twinRisk">—</div><div class="dbox-unit">—</div></div>
+      <div class="dbox"><div class="dbox-lbl">&Eacute;tat du roulement</div><div class="dbox-val" id="twinState">—</div><div class="dbox-unit" id="twinDate">—</div></div>
+    </div>
+  </div>
   <div class="kpis">
     <div class="kpi"><div class="lbl">Vibration RMS</div><div class="val" id="k-rms">&mdash;</div><div class="delta">fen&ecirc;tre courante</div></div>
     <div class="kpi"><div class="lbl">RUL pr&eacute;dite</div><div class="val" id="k-rul">&mdash;</div><div class="delta">jours restants</div></div>
@@ -784,6 +818,15 @@ function renderLive(){ var rms=DATA.rms[idx], p=idx-OFFSET;
   var kb=document.getElementById('k-badge'); kb.textContent=st; kb.className='badge '+bc;
   document.getElementById('metaLine').textContent='Position : '+DATA.dates[idx]+'  ·  indice '+idx+'/'+(N-1)+'  ·  RUL prédite '+rul.toFixed(2)+' j';
   document.getElementById('timeSlider').value=idx;
+  var hrs=rul*24, rulUnit=(hrs<48?'heures':'jours');
+  document.getElementById('twinRms').textContent=rms.toFixed(4);
+  document.getElementById('twinRul').textContent=(rulUnit==='heures'?hrs.toFixed(1):rul.toFixed(2));
+  document.getElementById('twinRulUnit').textContent=rulUnit;
+  document.getElementById('twinRisk').textContent=riskFor(rul);
+  document.getElementById('twinState').textContent=st;
+  document.getElementById('twinDate').textContent=DATA.dates[idx];
+  var tb=document.getElementById('twinBadge'); tb.textContent=st; tb.className='dash-badge '+bc;
+  highlightTwinPipeline(idx);
   var m=chRMS.data.datasets[2].data; for(var i=0;i<N;i++)m[i]=null; m[idx]=rms; chRMS.update('none');
   var mr=chRUL.data.datasets[2].data; for(var j2=0;j2<mr.length;j2++)mr[j2]=null;
   var pp=Math.max(0,Math.min(mr.length-1,idx-OFFSET)); mr[pp]=rul; chRUL.update('none');
@@ -798,6 +841,8 @@ function renderLive(){ var rms=DATA.rms[idx], p=idx-OFFSET;
   dbox+=' · RUL '+rul.toFixed(2)+' j · RMS '+rms.toFixed(4);
   document.getElementById('diagBox').innerHTML=dbox;
 }
+function riskFor(rul){ if(rul>2.0)return'Faible'; if(rul>0.5)return'Modéré'; return'Élevé'; }
+function highlightTwinPipeline(idx){ var done='done', act='act'; var t=document.querySelectorAll('#pg-twin .pls'); t.forEach(function(el){ el.className='pls '+done; }); var a=document.querySelector('#pg-twin .pls[data-pl="rul"]'); if(a)a.className='pls '+act; }
 function scrub(v){ idx=Math.max(OFFSET,Math.min(N-1,v)); renderLive(); }
 var playing=false, fast=true, timer=null;
 function togglePlay(){ playing=!playing; var b=document.getElementById('playBtn');

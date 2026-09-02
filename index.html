@@ -128,6 +128,12 @@ th{color:var(--mut);font-weight:600}
 .reco{margin-top:16px;border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.6;border:1px solid var(--line)}
 .reco .r-t{font-weight:700;font-size:14px;margin-bottom:4px}
 .pipeline.pgtwin{margin:14px auto 0;max-width:1000px}
+.mode2{margin:24px auto 0;max-width:1000px;background:rgba(15,26,34,.5);border:1px solid var(--line);border-radius:16px;padding:18px}
+.mode2 .m2-head h2{margin:0 0 6px;font-size:19px}
+.mode2 .m2-head .sub{color:var(--mut);font-size:13.5px;line-height:1.55}
+.mode2 .m2-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:14px}
+.mode2 .m2-hint{color:var(--mut);font-size:12.5px}
+.mode2 .pipeline{margin-top:16px}
 pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.6;color:var(--txt)}
 @media(max-width:760px){.row{grid-template-columns:1fr}}
 </style>
@@ -264,6 +270,56 @@ pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-
     <div class="card"><h3>Diagnostic</h3><p id="diag" class="meta">&mdash;</p><p id="diag2" class="meta small"></p></div>
   </div>
   <div class="diag" id="diagBox"></div>
+
+  <div class="mode2">
+    <div class="m2-head">
+      <h2>&#128209; Mode 2 &mdash; Analyse du run complet</h2>
+      <div class="sub">Importe la s&eacute;quence NASA IMS &ndash; 2nd Test et applique automatiquement tout le pipeline pour produire la s&eacute;rie compl&egrave;te des RUL.</div>
+    </div>
+    <div class="m2-controls">
+      <button class="btn" id="runSeqBtn" onclick="runSeq()">&#9889; ANALYSER LE RUN COMPLET (BEARING 1)</button>
+      <span class="m2-hint">984 fichiers &middot; 2nd test NASA IMS &middot; canal 1</span>
+    </div>
+    <div class="pipeline" id="seqPipe" style="display:none">
+      <div class="pl-title">&#9881; Pipeline automatique &mdash; run complet</div>
+      <div class="pl-steps">
+        <span class="pls" id="sq-acq">984 fichiers</span>
+        <span class="pl-arrow">&#8594;</span>
+        <span class="pls" id="sq-sig">Extraction signal</span>
+        <span class="pl-arrow">&#8594;</span>
+        <span class="pls" id="sq-rms">RMS / acquisition</span>
+        <span class="pl-arrow">&#8594;</span>
+        <span class="pls" id="sq-ts">S&eacute;rie RMS</span>
+        <span class="pl-arrow">&#8594;</span>
+        <span class="pls" id="sq-norm">Normalisation</span>
+        <span class="pl-arrow">&#8594;</span>
+        <span class="pls" id="sq-win">Fen&ecirc;tres 50</span>
+        <span class="pl-arrow">&#8594;</span>
+        <span class="pls" id="sq-cnn">CNN-LSTM</span>
+        <span class="pl-arrow">&#8594;</span>
+        <span class="pls" id="sq-rul">984 RUL</span>
+      </div>
+    </div>
+    <div class="dash" id="seqDash" style="display:none">
+      <div class="dash-head">
+        <div>
+          <div class="dash-file">ROULEMENT : BEARING 1</div>
+          <div class="dash-sub">2nd Test NASA IMS &middot; canal 1</div>
+        </div>
+        <div class="dash-badge" id="seqBadge">—</div>
+      </div>
+      <div class="dash-grid">
+        <div class="dbox"><div class="dbox-lbl">Acquisitions analys&eacute;es</div><div class="dbox-val" id="sq-n">—</div><div class="dbox-unit">fichiers</div></div>
+        <div class="dbox"><div class="dbox-lbl">RMS actuel</div><div class="dbox-val" id="sq-rmsv">—</div><div class="dbox-unit">g</div></div>
+        <div class="dbox"><div class="dbox-lbl">RUL estim&eacute;e</div><div class="dbox-val" id="sq-rulv">—</div><div class="dbox-unit" id="sq-rulu">jour</div></div>
+        <div class="dbox"><div class="dbox-lbl">&Eacute;tat</div><div class="dbox-val" id="sq-state">—</div><div class="dbox-unit" id="sq-date">—</div></div>
+      </div>
+    </div>
+    <div class="row" id="seqCharts" style="display:none">
+      <div class="card"><h3>&#128200; &Eacute;volution du RMS</h3><canvas id="chSeqRms"></canvas></div>
+      <div class="card"><h3>&#128201; RUL r&eacute;elle vs RUL pr&eacute;dite</h3><canvas id="chSeqRul"></canvas></div>
+    </div>
+  </div>
 </section>
 
 <!-- ============ IMPORT BEARING (pipeline complet) ============ -->
@@ -853,6 +909,43 @@ function togglePlay(){ playing=!playing; var b=document.getElementById('playBtn'
 function resetPlay(){ playing=false; clearInterval(timer); var b=document.getElementById('playBtn'); b.innerHTML='&#9654; Lecture'; idx=OFFSET; renderLive(); }
 function swapMode(){ fast=!fast; document.getElementById('modeBtn').textContent='Vitesse : '+(fast?'🚀':'🐢'); }
 document.getElementById('timeSlider').max=N-1; document.getElementById('timeSlider').min=OFFSET;
+
+// ===== Mode 2 : analyse du run complet (donnees embarquees) =====
+var chSeqRms=null, chSeqRul=null, _seqRun=false;
+var SEQ_ACQ=984, SEQ_POINT=977;   // point representatif du pic de degradation
+function seqStatus(rul,rms){ if(rul<=0.1)return['⚠️ Panne imminente','b-red']; if(rul<=2.0)return['⚠️ Attention','b-yellow']; if(rms>ALERT)return['⚠️ Surveillance','b-orange']; return['✅ Normal','b-green']; }
+function runSeq(){
+  if(_seqRun) return; _seqRun=true;
+  var pip=['sq-acq','sq-sig','sq-rms','sq-ts','sq-norm','sq-win','sq-cnn','sq-rul'];
+  var box=document.getElementById('seqPipe'); box.style.display='block';
+  pip.forEach(function(id,i){ setTimeout(function(){ markStep(id,'done'); },170*i); });
+  setTimeout(function(){
+    var idx=SEQ_POINT, p=idx-OFFSET;
+    var rms=DATA.rms[idx];
+    var rul=(p>=0&&p<DATA.pred_rul.length)?DATA.pred_rul[p]:DATA.pred_rul[0];
+    var pair=seqStatus(rul,rms), st=pair[0], bc=pair[1];
+    document.getElementById('seqDash').style.display='block';
+    document.getElementById('seqCharts').style.display='block';
+    document.getElementById('sq-n').textContent='984';
+    document.getElementById('sq-rmsv').textContent=rms.toFixed(4);
+    document.getElementById('sq-rulv').textContent=rul.toFixed(2);
+    document.getElementById('sq-rulu').textContent=(rul>1?'jours':'jour(s)');
+    document.getElementById('sq-state').textContent=st;
+    document.getElementById('sq-date').textContent='2nd Test IMS · fin de campagne';
+    var sb=document.getElementById('seqBadge'); sb.textContent=st; sb.className='dash-badge '+bc;
+    if(chSeqRms)chSeqRms.destroy(); if(chSeqRul)chSeqRul.destroy();
+    chSeqRms=new Chart(document.getElementById('chSeqRms'),{type:'line',data:{labels:DATA.dates,datasets:[
+      {label:'RMS',data:DATA.rms,borderColor:'#00C6AE',backgroundColor:'rgba(0,198,174,.08)',fill:true,borderWidth:1.6,pointRadius:0,tension:.15},
+      {label:'Seuil alerte',data:nullArr(N).fill(ALERT),borderColor:'#FFB300',borderDash:[7,5],borderWidth:1.5,pointRadius:0},
+      {label:'Point actuel',data:nullArr(N),borderColor:'#E53935',backgroundColor:'#E53935',pointRadius:5,showLine:false}
+    ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
+    chSeqRms.data.datasets[2].data[idx]=rms;
+    chSeqRul=new Chart(document.getElementById('chSeqRul'),{type:'line',data:{labels:DATA.dates.slice(OFFSET),datasets:[
+      {label:'RUL prédite',data:DATA.pred_rul,borderColor:'#4FC3F7',backgroundColor:'rgba(79,195,247,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.1},
+      {label:'RUL réelle',data:DATA.true_rul,borderColor:'#8B98A5',borderDash:[5,5],borderWidth:1.4,pointRadius:0}
+    ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
+  }, 170*pip.length+200);
+}
 
 // ===== Donnees : tableau + graphe =====
 new Chart(document.getElementById('chDataRMS'),{type:'line',data:{labels:DATA.dates,datasets:[

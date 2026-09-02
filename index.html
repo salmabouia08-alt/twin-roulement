@@ -306,15 +306,18 @@ function runOp(){
     if(!_opPreds) _opPreds=inferSerie(rms, OFFSET);
     var preds=_opPreds, trueR=_opTrue;
     var labels=DATA.dates.slice(0, rms.length);
-    // point representatif = maximum de degradation atteint
-    var im=0, mx=-1; for(var i=0;i<rms.length;i++){ if(rms[i]>mx){mx=rms[i];im=i;} }
-    var pk=im-OFFSET;
-    // RUL prete : prolonger preds si besoin (petite serie)
-    var ruling=preds.length? Math.max(0,preds[Math.min(pk,preds.length-1)]) : 0;
+    // ETAT ACTUEL = derniere observation reelle de la serie (dernier point au-dessus du bruit)
+    var FLOOR=1e-2, ip=-1;
+    for(var i=rms.length-1;i>=0;i--){ if(rms[i]>FLOOR){ ip=i; break; } }
+    if(ip<0) ip=rms.length-1;
+    var curRms=rms[ip];
+    // RUL predite pour ce point final
+    var pk=ip-OFFSET;
+    var ruling=preds.length? Math.max(0,preds[Math.min(Math.max(pk,0),preds.length-1)]) : 0;
     if(isNaN(ruling)||!isFinite(ruling)) ruling=0;
     var btn2=document.getElementById('opAnalyseBtn'); if(btn2)btn2.disabled=false;
     drawCharts(rms, preds, labels, trueR);
-    renderSummary(rms[im]||0, ruling);
+    renderSummary(curRms||0, ruling);
     // re-taille differee pour garantir le rendu du canvas apres l'affichage
     setTimeout(function(){ if(chOpRms)chOpRms.resize(); if(chOpRul)chOpRul.resize(); }, 120);
   }catch(e){

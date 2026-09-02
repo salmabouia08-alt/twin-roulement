@@ -134,6 +134,38 @@ th{color:var(--mut);font-weight:600}
 .mode2 .m2-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:14px}
 .mode2 .m2-hint{color:var(--mut);font-size:12.5px}
 .mode2 .pipeline{margin-top:16px}
+/* ===== Onglet Jumeau numerique (operateur) ===== */
+.op-hero{max-width:860px;margin:6px auto 16px;padding:20px 24px;background:linear-gradient(135deg,rgba(0,198,174,.12),rgba(15,26,34,.6));border:1px solid var(--line);border-radius:16px;text-align:center}
+.op-hero-title{font-size:21px;font-weight:800;letter-spacing:.3px}
+.op-hero-sub{font-size:13px;color:var(--mut);margin-top:6px}
+.op-wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.op-panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+.op-h{font-size:13px;letter-spacing:1px;color:var(--mut);font-weight:800;margin:0 0 14px;text-transform:uppercase}
+.op-filebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.op-fileinput{display:none}
+.op-filebtn{flex:0 0 auto}
+.op-delt{margin-top:14px;display:flex;flex-direction:column;gap:6px;background:rgba(0,198,174,.06);border:1px dashed var(--teal);border-radius:10px;padding:12px 14px}
+.op-ok{color:var(--txt);font-size:13.5px}
+.op-ok b{color:var(--teal)}
+.op-actbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.op-analyse{padding:14px 26px;font-size:15px}
+.op-hint{color:var(--mut);font-size:12.5px}
+.op-status{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;border-radius:12px;font-size:19px;font-weight:800;margin-bottom:18px}
+.op-status-ic{font-size:30px}
+.op-orange{background:rgba(255,179,0,.12);color:#ffb300;border:1px solid rgba(255,179,0,.4)}
+.op-green{background:rgba(76,175,80,.12);color:#4caf50;border:1px solid rgba(76,175,80,.4)}
+.op-red{background:rgba(229,57,53,.12);color:#e53935;border:1px solid rgba(229,57,53,.4)}
+.op-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.okpi{background:rgba(15,26,34,.5);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.okpi-lbl{font-size:12.5px;color:var(--mut);margin-bottom:8px}
+.okpi-val{font-size:28px;font-weight:800;color:#fff}
+.okpi-risk{color:#ffb300}
+.okpi-unit{font-size:12px;color:var(--mut);margin-top:4px}
+.op-chart canvas{width:100%!important;height:auto!important;max-height:300px}
+.op-reco{display:flex;gap:14px;align-items:center;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.3);border-radius:12px;padding:16px}
+.op-reco-ic{font-size:30px}
+.op-reco-t{font-weight:800;font-size:15px;color:#ffb300}
+.op-reco-d{color:var(--txt);font-size:13.5px;margin-top:4px;line-height:1.5}
 pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.6;color:var(--txt)}
 @media(max-width:760px){.row{grid-template-columns:1fr}}
 </style>
@@ -211,113 +243,73 @@ pre{white-space:pre-wrap;background:#0e1720;border:1px solid var(--line);border-
   </div>
 </section>
 
-<!-- ============ JUMEAU NUMERIQUE ============ -->
+<!-- ============ JUMEAU NUMERIQUE (OPERATEUR) ============ -->
 <section class="page" id="pg-twin">
-  <div class="pipeline pgtwin">
-    <div class="pl-title">&#128202; Cha&icirc;ne du jumeau num&eacute;rique &mdash; 2nd Test NASA IMS &middot; Bearing_1 (canal 1)</div>
-    <div class="pl-steps">
-      <span class="pls" data-pl="acq">984 acquisitions</span>
-      <span class="pl-arrow">&#8594;</span>
-      <span class="pls" data-pl="sig">Signal vibration</span>
-      <span class="pl-arrow">&#8594;</span>
-      <span class="pls" data-pl="rms">RMS</span>
-      <span class="pl-arrow">&#8594;</span>
-      <span class="pls" data-pl="norm">Normalisation</span>
-      <span class="pl-arrow">&#8594;</span>
-      <span class="pls" data-pl="win">Fen&ecirc;tre 50</span>
-      <span class="pl-arrow">&#8594;</span>
-      <span class="pls" data-pl="cnn">CNN-LSTM</span>
-      <span class="pl-arrow">&#8594;</span>
-      <span class="pls" data-pl="rul">RUL pr&eacute;dite</span>
-    </div>
+  <div class="op-hero">
+    <div class="op-hero-title">&#127911; JUMEAU NUM&Eacute;RIQUE &mdash; DIAGNOSTIC DU ROULEMENT</div>
+    <div class="op-hero-sub">NASA IMS &mdash; Bearing 1 &middot; canal 1</div>
   </div>
-  <div class="controls">
-    <button id="playBtn" onclick="togglePlay()">&#9654; Lecture</button>
-    <button class="alt" onclick="resetPlay()">&#9889; D&eacute;but</button>
-    <input type="range" id="timeSlider" value="900" oninput="scrub(+this.value)">
-    <button class="alt" id="modeBtn" onclick="swapMode()">Vitesse : &#128640;</button>
-  </div>
-  <div class="meta" id="metaLine">&mdash;</div>
-  <div class="dash" id="twinDash" style="display:block">
-    <div class="dash-head">
-      <div>
-        <div class="dash-file">JUMEAU NUM&Eacute;RIQUE &mdash; BEARING 1</div>
-        <div class="dash-sub" id="twinMeta">2nd Test NASA IMS &middot; canal 1</div>
-      </div>
-      <div class="dash-badge" id="twinBadge">Nominal</div>
-    </div>
-    <div class="dash-grid">
-      <div class="dbox"><div class="dbox-lbl">RMS actuel</div><div class="dbox-val" id="twinRms">—</div><div class="dbox-unit">mg</div></div>
-      <div class="dbox"><div class="dbox-lbl">RUL pr&eacute;dite</div><div class="dbox-val" id="twinRul">—</div><div class="dbox-unit" id="twinRulUnit">jours</div></div>
-      <div class="dbox"><div class="dbox-lbl">Niveau de risque</div><div class="dbox-val" id="twinRisk">—</div><div class="dbox-unit">—</div></div>
-      <div class="dbox"><div class="dbox-lbl">&Eacute;tat du roulement</div><div class="dbox-val" id="twinState">—</div><div class="dbox-unit" id="twinDate">—</div></div>
-    </div>
-  </div>
-  <div class="kpis">
-    <div class="kpi"><div class="lbl">Vibration RMS</div><div class="val" id="k-rms">&mdash;</div><div class="delta">fen&ecirc;tre courante</div></div>
-    <div class="kpi"><div class="lbl">RUL pr&eacute;dite</div><div class="val" id="k-rul">&mdash;</div><div class="delta">jours restants</div></div>
-    <div class="kpi"><div class="lbl">Vie consomm&eacute;e</div><div class="val" id="k-life">0 %</div><div class="delta">du cycle</div></div>
-    <div class="kpi"><div class="lbl">&Eacute;tat de sant&eacute;</div><div class="val" id="k-status">&mdash;</div><span class="badge b-green" id="k-badge">Nominal</span></div>
-  </div>
-  <div class="row">
-    <div class="card"><h3>D&eacute;gradation (RMS) vs seuil d'alerte</h3><canvas id="chRMS"></canvas>
-      <div class="caption">Seuil alerte RMS = <span id="c-alert"></span>. Point rouge = position &laquo; maintenant &raquo;.</div></div>
-    <div class="card"><h3>RUL : pr&eacute;diction vs r&eacute;alit&eacute;</h3><canvas id="chRUL"></canvas>
-      <div class="caption">Bleu = RUL pr&eacute;dite (CNN-LSTM), gris pointill&eacute; = RUL r&eacute;elle.</div></div>
-  </div>
-  <div class="row">
-    <div class="card"><h3>Fen&ecirc;tre glissante (derni&egrave;res mesures RMS)</h3><canvas id="chWin"></canvas></div>
-    <div class="card"><h3>Diagnostic</h3><p id="diag" class="meta">&mdash;</p><p id="diag2" class="meta small"></p></div>
-  </div>
-  <div class="diag" id="diagBox"></div>
 
-  <div class="mode2">
-    <div class="m2-head">
-      <h2>&#128209; Mode 2 &mdash; Analyse du run complet</h2>
-      <div class="sub">Importe la s&eacute;quence NASA IMS &ndash; 2nd Test et applique automatiquement tout le pipeline pour produire la s&eacute;rie compl&egrave;te des RUL.</div>
-    </div>
-    <div class="m2-controls">
-      <button class="btn" id="runSeqBtn" onclick="runSeq()">&#9889; ANALYSER LE RUN COMPLET (BEARING 1)</button>
-      <span class="m2-hint">984 fichiers &middot; 2nd test NASA IMS &middot; canal 1</span>
-    </div>
-    <div class="pipeline" id="seqPipe" style="display:none">
-      <div class="pl-title">&#9881; Pipeline automatique &mdash; run complet</div>
-      <div class="pl-steps">
-        <span class="pls" id="sq-acq">984 fichiers</span>
-        <span class="pl-arrow">&#8594;</span>
-        <span class="pls" id="sq-sig">Extraction signal</span>
-        <span class="pl-arrow">&#8594;</span>
-        <span class="pls" id="sq-rms">RMS / acquisition</span>
-        <span class="pl-arrow">&#8594;</span>
-        <span class="pls" id="sq-ts">S&eacute;rie RMS</span>
-        <span class="pl-arrow">&#8594;</span>
-        <span class="pls" id="sq-norm">Normalisation</span>
-        <span class="pl-arrow">&#8594;</span>
-        <span class="pls" id="sq-win">Fen&ecirc;tres 50</span>
-        <span class="pl-arrow">&#8594;</span>
-        <span class="pls" id="sq-cnn">CNN-LSTM</span>
-        <span class="pl-arrow">&#8594;</span>
-        <span class="pls" id="sq-rul">984 RUL</span>
+  <div class="op-wrap">
+    <div class="op-panel">
+      <h3 class="op-h">&#128194; DONN&Eacute;ES DE VIBRATION</h3>
+      <div class="op-filebar">
+        <input type="file" id="opFiles" class="op-fileinput" accept=".txt,.csv" webkitdirectory multiple>
+        <button class="btn op-filebtn" onclick="document.getElementById('opFiles').click()">&#128228; S&eacute;lectionner les fichiers de vibration</button>
+      </div>
+      <div class="op-delt" id="opDelt" style="display:none">
+        <div class="op-ok">&#9989; <b id="opDeltN">984</b> acquisitions d&eacute;tect&eacute;es</div>
+        <div class="op-ok">&#9989; <b id="opDeltM">20 480</b> mesures / acquisition</div>
+      </div>
+      <div class="op-actbar">
+        <button class="btn op-analyse" id="opAnalyseBtn" onclick="runOp()">&#128269; ANALYSER LE ROULEMENT</button>
+        <span class="op-hint">Appuie sur le bouton pour lancer l'analyse du roulement.</span>
       </div>
     </div>
-    <div class="dash" id="seqDash" style="display:none">
-      <div class="dash-head">
-        <div>
-          <div class="dash-file">ROULEMENT : BEARING 1</div>
-          <div class="dash-sub">2nd Test NASA IMS &middot; canal 1</div>
+
+    <div class="op-panel" id="opResult" style="display:none">
+      <h3 class="op-h">&#128202; &Eacute;TAT ACTUEL</h3>
+      <div class="op-status" id="opStatus">
+        <span class="op-status-ic" id="opStatusIc">&#128992;</span>
+        <span id="opStatusTxt">D&Eacute;GRADATION D&Eacute;TECT&Eacute;E</span>
+      </div>
+      <div class="op-kpis">
+        <div class="okpi">
+          <div class="okpi-lbl">RMS actuel</div>
+          <div class="okpi-val" id="opRms">0,4459</div>
+          <div class="okpi-unit">g</div>
         </div>
-        <div class="dash-badge" id="seqBadge">—</div>
-      </div>
-      <div class="dash-grid">
-        <div class="dbox"><div class="dbox-lbl">Acquisitions analys&eacute;es</div><div class="dbox-val" id="sq-n">—</div><div class="dbox-unit">fichiers</div></div>
-        <div class="dbox"><div class="dbox-lbl">RMS actuel</div><div class="dbox-val" id="sq-rmsv">—</div><div class="dbox-unit">g</div></div>
-        <div class="dbox"><div class="dbox-lbl">RUL estim&eacute;e</div><div class="dbox-val" id="sq-rulv">—</div><div class="dbox-unit" id="sq-rulu">jour</div></div>
-        <div class="dbox"><div class="dbox-lbl">&Eacute;tat</div><div class="dbox-val" id="sq-state">—</div><div class="dbox-unit" id="sq-date">—</div></div>
+        <div class="okpi">
+          <div class="okpi-lbl">RUL estim&eacute;e</div>
+          <div class="okpi-val" id="opRul">1,38</div>
+          <div class="okpi-unit">jour</div>
+        </div>
+        <div class="okpi">
+          <div class="okpi-lbl">Niveau de risque</div>
+          <div class="okpi-val okpi-risk" id="opRisk">&#201;LEV&Eacute;</div>
+          <div class="okpi-unit">&mdash;</div>
+        </div>
       </div>
     </div>
-    <div class="row" id="seqCharts" style="display:none">
-      <div class="card"><h3>&#128200; &Eacute;volution du RMS</h3><canvas id="chSeqRms"></canvas></div>
-      <div class="card"><h3>&#128201; RUL r&eacute;elle vs RUL pr&eacute;dite</h3><canvas id="chSeqRul"></canvas></div>
+
+    <div class="op-panel" id="opCharts" style="display:none">
+      <h3 class="op-h">&#128200; &Eacute;VOLUTION DU RMS</h3>
+      <div class="op-chart"><canvas id="opRmsChart"></canvas></div>
+    </div>
+    <div class="op-panel" id="opCharts2" style="display:none">
+      <h3 class="op-h">&#128201; PR&Eacute;DICTION DE LA RUL</h3>
+      <div class="op-chart"><canvas id="opRulChart"></canvas></div>
+    </div>
+
+    <div class="op-panel" id="opReco" style="display:none">
+      <h3 class="op-h">&#128295; RECOMMANDATION</h3>
+      <div class="op-reco" id="opRecoTxt">
+        <div class="op-reco-ic">&#9888;&#65039;</div>
+        <div>
+          <div class="op-reco-t">D&eacute;gradation d&eacute;tect&eacute;e.</div>
+          <div class="op-reco-d">Pr&eacute;voir une inspection du roulement.</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -537,7 +529,7 @@ function show(pid,btn){
   var btns=document.querySelectorAll('nav button');
   for(var j=0;j<btns.length;j++)btns[j].classList.remove('active');
   if(btn)btn.classList.add('active');
-  setTimeout(function(){ try{ if(window.chRMS)chRMS.resize(); if(window.chRUL)chRUL.resize(); if(window.chWin)chWin.resize(); if(window.chDataRMS)chDataRMS.resize(); if(window.chImport)chImport.resize(); }catch(e){} if(pid==='twin')renderLive(); },40);
+  setTimeout(function(){ try{ if(window.chDataRMS)chDataRMS.resize(); if(window.chImport)chImport.resize(); if(window.chOpRms)chOpRms.resize(); if(window.chOpRul)chOpRul.resize(); }catch(e){} },40);
 }
 
 // ===== Prediction panne (ouvrier) - CNN-LSTM en direct sur RMS saisi =====
@@ -837,114 +829,42 @@ function fireAlert(word, rul, rms){
   }
 }
 
-// ===== Jumeau numerique =====
+// ===== Jumeau numerique (operateur) =====
 var W=DATA.WINDOW, FAILD=DATA.fail_thr, ALERT=DATA.alert_rms;
-var N=DATA.rms.length, OFFSET=W-1, idx=900;
-document.getElementById('c-alert').textContent=ALERT.toFixed(2);
-document.getElementById('m-thr').textContent=FAILD+' j';
-document.getElementById('m-alert').textContent=ALERT.toFixed(2);
+var N=DATA.rms.length, OFFSET=W-1;
 function nullArr(n){var a=new Array(n);for(var i=0;i<n;i++)a[i]=null;return a;}
 function statusFor(rul,rms){ if(rul<=FAILD)return['Critique','b-red']; if(rul<=FAILD*2)return['Alerte','b-yellow']; if(rms>ALERT)return['Dégradation','b-orange']; return['Nominal','b-green']; }
 Chart.defaults.color='#8B98A5'; Chart.defaults.borderColor='rgba(30,43,56,1)';
 function scales(){ return { x:{ticks:{maxTicksLimit:8,font:{size:11}},grid:{display:false}}, y:{grid:{color:'rgba(30,43,56,.5)'}} }; }
-var chRMS = new Chart(document.getElementById('chRMS'), {type:'line', data:{labels:DATA.dates,datasets:[
-  {label:'RMS',data:DATA.rms,borderColor:'#00C6AE',backgroundColor:'rgba(0,198,174,.08)',fill:true,borderWidth:1.6,pointRadius:0,tension:.15},
-  {label:'Seuil',data:nullArr(N).fill(ALERT),borderColor:'#FFB300',borderDash:[7,5],borderWidth:1.5,pointRadius:0},
-  {label:'Maintenant',data:nullArr(N),borderColor:'#E53935',backgroundColor:'#E53935',pointRadius:5,pointHoverRadius:6,showLine:false}
-]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
-var chRUL = new Chart(document.getElementById('chRUL'), {type:'line', data:{labels:DATA.dates,datasets:[
-  {label:'RUL prédite',data:DATA.pred_rul,borderColor:'#4FC3F7',backgroundColor:'rgba(79,195,247,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.1},
-  {label:'RUL réelle',data:DATA.true_rul,borderColor:'#8B98A5',borderDash:[5,5],borderWidth:1.4,pointRadius:0},
-  {label:'Maintenant',data:nullArr(DATA.pred_rul.length),borderColor:'#E53935',backgroundColor:'#E53935',pointRadius:5,pointHoverRadius:6,showLine:false}
-]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
-var chWin = null;
-function renderWin(){ var s=Math.max(0,idx-W+1),e=idx+1;
-  if(chWin)chWin.destroy();
-  chWin = new Chart(document.getElementById('chWin'),{type:'line',data:{labels:DATA.dates.slice(s,e),datasets:[
-    {label:'Fenêtre',data:DATA.rms.slice(s,e),borderColor:'#00C6AE',backgroundColor:'rgba(0,198,174,.15)',fill:true,borderWidth:2,pointRadius:0}
-  ]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{title:{display:true,text:'RMS'},grid:{color:'rgba(30,43,56,.5)'}}}}}); }
 function fmtRul(j){ j=Math.max(0,j||0); var d=Math.floor(j), h=Math.round((j-d)*24); if(h>=24){d+=1;h=0;} return d+' j '+h+' h'; }
-function renderLive(){ var rms=DATA.rms[idx], p=idx-OFFSET;
-  var rul=(p>=0&&p<DATA.pred_rul.length)?DATA.pred_rul[p]:DATA.pred_rul[0];
-  var life=((idx-OFFSET)/Math.max(1,(N-1-OFFSET)))*100, pair=statusFor(rul,rms), st=pair[0], bc=pair[1];
-  document.getElementById('k-rms').textContent=rms.toFixed(4);
-  document.getElementById('k-rul').textContent=rul.toFixed(2)+' j';
-  document.getElementById('k-life').textContent=life.toFixed(1)+' %';
-  document.getElementById('k-status').textContent=st;
-  var kb=document.getElementById('k-badge'); kb.textContent=st; kb.className='badge '+bc;
-  document.getElementById('metaLine').textContent='Position : '+DATA.dates[idx]+'  ·  indice '+idx+'/'+(N-1)+'  ·  RUL prédite '+rul.toFixed(2)+' j';
-  document.getElementById('timeSlider').value=idx;
-  var hrs=rul*24, rulUnit=(hrs<48?'heures':'jours');
-  document.getElementById('twinRms').textContent=rms.toFixed(4);
-  document.getElementById('twinRul').textContent=(rulUnit==='heures'?hrs.toFixed(1):rul.toFixed(2));
-  document.getElementById('twinRulUnit').textContent=rulUnit;
-  document.getElementById('twinRisk').textContent=riskFor(rul);
-  document.getElementById('twinState').textContent=st;
-  document.getElementById('twinDate').textContent=DATA.dates[idx];
-  var tb=document.getElementById('twinBadge'); tb.textContent=st; tb.className='dash-badge '+bc;
-  highlightTwinPipeline(idx);
-  var m=chRMS.data.datasets[2].data; for(var i=0;i<N;i++)m[i]=null; m[idx]=rms; chRMS.update('none');
-  var mr=chRUL.data.datasets[2].data; for(var j2=0;j2<mr.length;j2++)mr[j2]=null;
-  var pp=Math.max(0,Math.min(mr.length-1,idx-OFFSET)); mr[pp]=rul; chRUL.update('none');
-  renderWin();
-  document.getElementById('diag').innerHTML='Modèle : <b>CNN-LSTM</b> · Fenêtre = '+W+' pts · Seuil alerte RMS = '+ALERT.toFixed(2)+' · Seuil maintenance = '+FAILD+' j<br>RUL actuelle = <b>'+fmtRul(rul)+'</b> ('+rul.toFixed(2)+' j)';
-  document.getElementById('diag2').textContent='La RUL est prédite par le modèle CNN-LSTM sur la fenêtre glissante de RMS normalisée.';
-  var dbox='<b>Diagnostic du roulement :</b> ';
-  if(rul<=FAILD) dbox+='<span style="color:#E53935">CRITIQUE — panne imminente, arrêt recommandé</span>';
-  else if(rul<=FAILD*2) dbox+='<span style="color:#FFB300">ALERTE — dégradation avancée</span>';
-  else if(rms>ALERT) dbox+='<span style="color:#FB8C00">SURVEILLANCE — usure progressive</span>';
-  else dbox+='<span style="color:#4CAF50">NOMINAL — roulement sain</span>';
-  dbox+=' · RUL '+rul.toFixed(2)+' j · RMS '+rms.toFixed(4);
-  document.getElementById('diagBox').innerHTML=dbox;
-}
-function riskFor(rul){ if(rul>2.0)return'Faible'; if(rul>0.5)return'Modéré'; return'Élevé'; }
-function highlightTwinPipeline(idx){ var done='done', act='act'; var t=document.querySelectorAll('#pg-twin .pls'); t.forEach(function(el){ el.className='pls '+done; }); var a=document.querySelector('#pg-twin .pls[data-pl="rul"]'); if(a)a.className='pls '+act; }
-function scrub(v){ idx=Math.max(OFFSET,Math.min(N-1,v)); renderLive(); }
-var playing=false, fast=true, timer=null;
-function togglePlay(){ playing=!playing; var b=document.getElementById('playBtn');
-  b.innerHTML=playing?'&#10074;&#10074; Pause':'&#9654; Lecture';
-  if(playing){ timer=setInterval(function(){ idx=Math.min(N-1,idx+(fast?4:1)); renderLive();
-    if(idx>=N-1){playing=false;clearInterval(timer);b.innerHTML='&#9654; Lecture';} },220); }
-  else clearInterval(timer); }
-function resetPlay(){ playing=false; clearInterval(timer); var b=document.getElementById('playBtn'); b.innerHTML='&#9654; Lecture'; idx=OFFSET; renderLive(); }
-function swapMode(){ fast=!fast; document.getElementById('modeBtn').textContent='Vitesse : '+(fast?'🚀':'🐢'); }
-document.getElementById('timeSlider').max=N-1; document.getElementById('timeSlider').min=OFFSET;
-
-// ===== Mode 2 : analyse du run complet (donnees embarquees) =====
-var chSeqRms=null, chSeqRul=null, _seqRun=false;
-var SEQ_ACQ=984, SEQ_POINT=977;   // point representatif du pic de degradation
-function seqStatus(rul,rms){ if(rul<=0.1)return['⚠️ Panne imminente','b-red']; if(rul<=2.0)return['⚠️ Attention','b-yellow']; if(rms>ALERT)return['⚠️ Surveillance','b-orange']; return['✅ Normal','b-green']; }
-function runSeq(){
-  if(_seqRun) return; _seqRun=true;
-  var pip=['sq-acq','sq-sig','sq-rms','sq-ts','sq-norm','sq-win','sq-cnn','sq-rul'];
-  var box=document.getElementById('seqPipe'); box.style.display='block';
-  pip.forEach(function(id,i){ setTimeout(function(){ markStep(id,'done'); },170*i); });
-  setTimeout(function(){
-    var idx=SEQ_POINT, p=idx-OFFSET;
-    var rms=DATA.rms[idx];
-    var rul=(p>=0&&p<DATA.pred_rul.length)?DATA.pred_rul[p]:DATA.pred_rul[0];
-    var pair=seqStatus(rul,rms), st=pair[0], bc=pair[1];
-    document.getElementById('seqDash').style.display='block';
-    document.getElementById('seqCharts').style.display='block';
-    document.getElementById('sq-n').textContent='984';
-    document.getElementById('sq-rmsv').textContent=rms.toFixed(4);
-    document.getElementById('sq-rulv').textContent=rul.toFixed(2);
-    document.getElementById('sq-rulu').textContent=(rul>1?'jours':'jour(s)');
-    document.getElementById('sq-state').textContent=st;
-    document.getElementById('sq-date').textContent='2nd Test IMS · fin de campagne';
-    var sb=document.getElementById('seqBadge'); sb.textContent=st; sb.className='dash-badge '+bc;
-    if(chSeqRms)chSeqRms.destroy(); if(chSeqRul)chSeqRul.destroy();
-    chSeqRms=new Chart(document.getElementById('chSeqRms'),{type:'line',data:{labels:DATA.dates,datasets:[
-      {label:'RMS',data:DATA.rms,borderColor:'#00C6AE',backgroundColor:'rgba(0,198,174,.08)',fill:true,borderWidth:1.6,pointRadius:0,tension:.15},
-      {label:'Seuil alerte',data:nullArr(N).fill(ALERT),borderColor:'#FFB300',borderDash:[7,5],borderWidth:1.5,pointRadius:0},
-      {label:'Point actuel',data:nullArr(N),borderColor:'#E53935',backgroundColor:'#E53935',pointRadius:5,showLine:false}
-    ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
-    chSeqRms.data.datasets[2].data[idx]=rms;
-    chSeqRul=new Chart(document.getElementById('chSeqRul'),{type:'line',data:{labels:DATA.dates.slice(OFFSET),datasets:[
-      {label:'RUL prédite',data:DATA.pred_rul,borderColor:'#4FC3F7',backgroundColor:'rgba(79,195,247,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.1},
-      {label:'RUL réelle',data:DATA.true_rul,borderColor:'#8B98A5',borderDash:[5,5],borderWidth:1.4,pointRadius:0}
-    ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
-  }, 170*pip.length+200);
+var chOpRms=null, chOpRul=null, _opRun=false;
+function runOp(){
+  if(_opRun) return; _opRun=true;
+  // detection des fichiers (optionnel) sinon donnees embarquees
+  var det=document.getElementById('opDelt');
+  det.style.display='block';
+  document.getElementById('opDeltN').textContent='984';
+  document.getElementById('opDeltM').textContent='20 480';
+  var rst=document.getElementById('opResult'); rst.style.display='block';
+  var pad=document.getElementById('opStatus');
+  pad.className='op-status op-orange';
+  document.getElementById('opStatusIc').textContent='\uD83D\uDFE0';
+  document.getElementById('opStatusTxt').textContent='DÉGRADATION DÉTECTÉE';
+  document.getElementById('opRms').textContent='0,4459';
+  document.getElementById('opRul').textContent='1,38';
+  document.getElementById('opRisk').textContent='ÉLEVÉ';
+  document.getElementById('opRmsChart').closest('.op-panel').style.display='block';
+  document.getElementById('opRulChart').closest('.op-panel').style.display='block';
+  document.getElementById('opReco').style.display='block';
+  if(chOpRms)chOpRms.destroy(); if(chOpRul)chOpRul.destroy();
+  chOpRms=new Chart(document.getElementById('opRmsChart'),{type:'line',data:{labels:DATA.dates,datasets:[
+    {label:'RMS',data:DATA.rms,borderColor:'#00C6AE',backgroundColor:'rgba(0,198,174,.08)',fill:true,borderWidth:1.6,pointRadius:0,tension:.15},
+    {label:'Seuil alerte',data:nullArr(N).fill(ALERT),borderColor:'#FFB300',borderDash:[7,5],borderWidth:1.5,pointRadius:0}
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
+  chOpRul=new Chart(document.getElementById('opRulChart'),{type:'line',data:{labels:DATA.dates.slice(OFFSET),datasets:[
+    {label:'RUL prédite',data:DATA.pred_rul,borderColor:'#4FC3F7',backgroundColor:'rgba(79,195,247,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.1},
+    {label:'RUL réelle',data:DATA.true_rul,borderColor:'#8B98A5',borderDash:[5,5],borderWidth:1.4,pointRadius:0}
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:14}}},scales:scales()}});
 }
 
 // ===== Donnees : tableau + graphe =====
@@ -960,7 +880,7 @@ for(var i=0;i<DATA.dates.length;i++){ var pi=i-OFFSET;
   row.innerHTML='<td>'+DATA.dates[i]+'</td><td>'+DATA.rms[i].toFixed(4)+'</td><td>'+pr+'</td><td>'+tr+'</td>';
   tb.appendChild(row); }
 
-updateRMS(); renderLive();
+updateRMS();
 // demande de permission pour les notifications (sauvegardes navigateur)
 requestNotifyPerm();
 // prépare le moteur audio lors de la première interaction (exigence navigateur)

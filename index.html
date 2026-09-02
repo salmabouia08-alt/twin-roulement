@@ -269,9 +269,8 @@ function renderSummary(rms, rul){
   document.getElementById('opStatusTxt').textContent=s[1];
   document.getElementById('opStatus').className='op-status '+s[2];
   document.getElementById('opRms').textContent=fmtFR(rms.toFixed(4));
-  var hh=Math.round(rul*24*10)/10;
-  document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2))+' j (&asymp; '+fmtFR(hh)+' h)';
-  document.getElementById('opRulUnit').textContent='';
+  document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2));
+  document.getElementById('opRulUnit').textContent='jour(s)';
   document.getElementById('opRisk').textContent=s[3];
   document.getElementById('opRecoIc').textContent=s[0];
   if(rul<=0.1){ document.getElementById('opRecoT').textContent='Panne imminente.'; document.getElementById('opRecoD').textContent='Arr\u00EAt recommand\u00E9 rapidement pour \u00E9viter la casse du roulement.'; }

@@ -56,6 +56,7 @@ canvas{max-width:100%}
 .op-chart canvas{display:block;width:100%!important;height:100%!important}
 .op-reco{display:flex;gap:14px;align-items:center;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.3);border-radius:12px;padding:16px}
 .op-alert{margin-top:14px;display:flex;gap:10px;align-items:center;background:rgba(229,57,53,.10);border:1px solid rgba(229,57,53,.45);border-radius:12px;padding:14px;color:#ff8a80;font-size:14.5px;font-weight:700}
+.op-curfile{margin:-8px 0 14px;font-size:12.5px;color:var(--mut);text-align:center}
 .op-reco-ic{font-size:30px}
 .op-reco-t{font-weight:800;font-size:15px;color:#ffb300}
 .op-reco-d{color:var(--txt);font-size:13.5px;margin-top:4px;line-height:1.5}
@@ -104,6 +105,7 @@ canvas{max-width:100%}
         <span class="op-status-ic" id="opStatusIc">&#9203;</span>
         <span id="opStatusTxt">EN ATTENTE D'ANALYSE</span>
       </div>
+      <div class="op-curfile" id="opCurFile">&mdash;</div>
       <div class="op-kpis">
         <div class="okpi">
           <div class="okpi-lbl">RMS actuel</div>
@@ -264,7 +266,7 @@ function inferSerie(rmsSerie, off){
   return preds;
 }
 function fmtFR(n){ return String(n).replace('.',','); }
-function renderSummary(rms, rul){
+function renderSummary(rms, rul, index){
   var s;
   if(rul<=0.1){ s=['\uD83D\uDD34','PANNE IMMINENTE','op-red','\u00C9LEV\u00C9']; }
   else if(rul<=2.0){ s=['\uD83D\uDFE0','D\u00C9GRADATION D\u00C9TECT\u00C9E','op-orange','\u00C9LEV\u00C9']; }
@@ -277,6 +279,8 @@ function renderSummary(rms, rul){
   document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2));
   document.getElementById('opRulUnit').textContent='jour(s)';
   document.getElementById('opRisk').textContent=s[3];
+  var cf=document.getElementById('opCurFile');
+  if(cf){ cf.textContent=(index==null||index<0)? '' : ('Fichier n°'+(index+1)+' sur '+(_opRmsSerie? _opRmsSerie.length : 0)+' · acquisition '+DATA.dates[index]); }
   document.getElementById('opRecoIc').textContent=s[0];
   if(rul<=0.1){ document.getElementById('opRecoT').textContent='Panne imminente.'; document.getElementById('opRecoD').textContent='Arr\u00EAt recommand\u00E9 rapidement pour \u00E9viter la casse du roulement.'; }
   else if(rul<=2.0){ document.getElementById('opRecoT').textContent='D\u00E9gradation d\u00E9tect\u00E9e.'; document.getElementById('opRecoD').textContent='Pr\u00E9voir une inspection du roulement.'; }
@@ -330,7 +334,7 @@ function runOp(){
     if(isNaN(ruling)||!isFinite(ruling)) ruling=0;
     var btn2=document.getElementById('opAnalyseBtn'); if(btn2)btn2.disabled=false;
     drawCharts(rms, preds, labels, trueR);
-    renderSummary(curRms||0, ruling);
+    renderSummary(curRms||0, ruling, ip);
     // re-taille differee pour garantir le rendu du canvas apres l'affichage
     setTimeout(function(){ if(chOpRms)chOpRms.resize(); if(chOpRul)chOpRul.resize(); }, 120);
   }catch(e){

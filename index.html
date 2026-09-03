@@ -105,7 +105,6 @@ canvas{max-width:100%}
         <span class="op-status-ic" id="opStatusIc">&#9203;</span>
         <span id="opStatusTxt">EN ATTENTE D'ANALYSE</span>
       </div>
-      <div class="op-curfile" id="opCurFile">&mdash;</div>
       <div class="op-kpis">
         <div class="okpi">
           <div class="okpi-lbl">RMS actuel</div>
@@ -326,16 +325,6 @@ function runOp(){
     }
     if(ip<0) ip=rms.length-1;
     var curRms=rms[ip];
-    // DIAGNOSTIC : 8 dernieres RMS calculees par l'app
-    try{
-      var dg=document.getElementById('opCurFile');
-      if(dg){
-        var parts=[];
-        var st=Math.max(0, rms.length-8);
-        for(var q=st;q<rms.length;q++){ parts.push(fmtFR(rms[q].toFixed(3))); }
-        dg.textContent='8 dernières RMS relevées : '+parts.join(' | ');
-      }
-    }catch(e){}
     // RUL predite pour ce dernier segment valide
     var pk=ip-OFFSET;
     var ruling=preds.length? Math.max(0,preds[Math.min(Math.max(pk,0),preds.length-1)]) : 0;

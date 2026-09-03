@@ -279,8 +279,6 @@ function renderSummary(rms, rul, index){
   document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2));
   document.getElementById('opRulUnit').textContent='jour(s)';
   document.getElementById('opRisk').textContent=s[3];
-  var cf=document.getElementById('opCurFile');
-  if(cf){ cf.textContent=(index==null||index<0)? '' : ('Fichier n°'+(index+1)+' sur '+(_opRmsSerie? _opRmsSerie.length : 0)+' · acquisition '+DATA.dates[index]); }
   document.getElementById('opRecoIc').textContent=s[0];
   if(rul<=0.1){ document.getElementById('opRecoT').textContent='Panne imminente.'; document.getElementById('opRecoD').textContent='Arr\u00EAt recommand\u00E9 rapidement pour \u00E9viter la casse du roulement.'; }
   else if(rul<=2.0){ document.getElementById('opRecoT').textContent='D\u00E9gradation d\u00E9tect\u00E9e.'; document.getElementById('opRecoD').textContent='Pr\u00E9voir une inspection du roulement.'; }
@@ -328,6 +326,16 @@ function runOp(){
     }
     if(ip<0) ip=rms.length-1;
     var curRms=rms[ip];
+    // DIAGNOSTIC : 8 dernieres RMS calculees par l'app
+    try{
+      var dg=document.getElementById('opCurFile');
+      if(dg){
+        var parts=[];
+        var st=Math.max(0, rms.length-8);
+        for(var q=st;q<rms.length;q++){ parts.push(fmtFR(rms[q].toFixed(3))); }
+        dg.textContent='8 dernières RMS relevées : '+parts.join(' | ');
+      }
+    }catch(e){}
     // RUL predite pour ce dernier segment valide
     var pk=ip-OFFSET;
     var ruling=preds.length? Math.max(0,preds[Math.min(Math.max(pk,0),preds.length-1)]) : 0;

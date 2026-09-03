@@ -383,16 +383,19 @@ function handleFolderFiles(files){
     var grabbed=0;
     while(idx<list.length && grabbed<_impBatch){
       var f=list[idx]; var fi=idx; idx++; grabbed++;
-      f.text().then(function(txt){
-        rms[fi]=computeRmsTxt(txt); done++;
-        if(done%25===0 || done===list.length) tick();
-        pump();
-      }).catch(function(){
-        rms[fi]=0; done++;
-        if(done%25===0 || done===list.length) tick();
-        pump();
-      });
+      readOne(f, fi);
     }
+  }
+  function readOne(f, fi){
+    var rd=new FileReader();
+    rd.onload=function(){ assign(fi, rd.result); };
+    rd.onerror=function(){ assign(fi, ''); };
+    rd.readAsText(f, 'latin1');
+  }
+  function assign(fi, txt){
+    rms[fi]=computeRmsTxt(txt); done++;
+    if(done%25===0 || done===list.length) tick();
+    pump();
   }
   function pump(){
     if(_impAbort) return;

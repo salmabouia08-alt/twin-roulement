@@ -89,8 +89,8 @@ canvas{max-width:100%}
         <button class="btn op-filebtn" onclick="document.getElementById('opFiles').click()">&#128228; S&eacute;lectionner les fichiers de vibration</button>
       </div>
       <div class="op-delt" id="opDelt" style="display:none">
-        <div class="op-ok">&#9989; <b id="opDeltN">0</b> acquisitions analys&eacute;es</div>
-        <div class="op-ok">&#9989; <b id="opDeltM">0</b> mesures / acquisition</div>
+        <div class="op-ok">&#9989; <b id="opDeltN">0</b> acquisitions <span id="opDeltState">s&eacute;lectionn&eacute;es</span></div>
+        <div class="op-ok">&#9989; <b id="opDeltM">0</b> points de vibration / acquisition</div>
       </div>
       <div class="op-none" id="opNone" style="display:none">Chargement des fichiers &#8230;</div>
       <div class="op-actbar" style="justify-content:center">
@@ -276,12 +276,12 @@ function renderSummary(rms, rul, index){
   document.getElementById('opStatus').className='op-status '+s[2];
   document.getElementById('opRms').textContent=fmtFR(rms.toFixed(4));
   document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2));
-  if(rul<1 && rul>0){ document.getElementById('opRulUnit').textContent='jour(s) soit \u2248 '+Math.max(1,Math.round(rul*24))+' h'; }
+  if(rul<1){ document.getElementById('opRulUnit').textContent='jour(s) (\u2248 '+Math.max(0,Math.round(rul*24))+' h)'; }
   else { document.getElementById('opRulUnit').textContent='jour(s)'; }
   document.getElementById('opRisk').textContent=s[3];
   document.getElementById('opRiskUnit').textContent=(s[3]==='\u00C9LEV\u00C9')?'de panne / arr\u00EAt requis':((s[3]==='MOYEN')?'vers le seuil alerte':'sous le seuil');
   document.getElementById('opRecoIc').textContent=s[0];
-  if(rul<=0.1){ document.getElementById('opRecoT').textContent='Panne imminente.'; document.getElementById('opRecoD').textContent='Arr\u00EAt recommand\u00E9 rapidement pour \u00E9viter la casse du roulement.'; }
+  if(rul<=0.1){ document.getElementById('opRecoT').textContent='Panne imminente.'; document.getElementById('opRecoD').textContent='Action recommand\u00E9e : inspection imm\u00E9diate du roulement.'; }
   else if(rul<=2.0){ document.getElementById('opRecoT').textContent='D\u00E9gradation d\u00E9tect\u00E9e.'; document.getElementById('opRecoD').textContent='Pr\u00E9voir une inspection du roulement.'; }
   else { document.getElementById('opRecoT').textContent='Fonctionnement normal.'; document.getElementById('opRecoD').textContent='Continuer \u00E0 surveiller r\u00E9guli\u00E8rement le niveau de vibration.'; }
 }
@@ -332,6 +332,7 @@ function runOp(){
     var ruling=preds.length? Math.max(0,preds[Math.min(Math.max(pk,0),preds.length-1)]) : 0;
     if(isNaN(ruling)||!isFinite(ruling)) ruling=0;
     var btn2=document.getElementById('opAnalyseBtn'); if(btn2)btn2.disabled=false;
+    var st2=document.getElementById('opDeltState'); if(st2)st2.textContent='analysées';
     drawCharts(rms, preds, labels, trueR);
     renderSummary(curRms||0, ruling, ip);
     // re-taille differee pour garantir le rendu du canvas apres l'affichage
@@ -402,12 +403,12 @@ function handleFolderFiles(files){
     var stepped=serie;
     document.getElementById('opDeltN').textContent=serie.length;
     document.getElementById('opDeltM').textContent=computeMoy();
+    var st_=document.getElementById('opDeltState'); if(st_)st_.textContent='sélectionnées';
     if(none)none.style.display='none';
     if(delt)delt.style.opacity=1;
     if(btn0){ btn0.style.display='inline-flex'; btn0.disabled=false; }
     var al3=document.getElementById('opAlert'); if(al3)al3.style.display='none';
     var res=document.getElementById('opResults'); if(res)res.style.display='block';
-    runOp();
   }
 }
 function setErr(msg){

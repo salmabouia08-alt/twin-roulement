@@ -55,6 +55,7 @@ canvas{max-width:100%}
 .op-chart{position:relative;height:300px}
 .op-chart canvas{display:block;width:100%!important;height:100%!important}
 .op-reco{display:flex;gap:14px;align-items:center;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.3);border-radius:12px;padding:16px}
+.op-alert{margin-top:14px;display:flex;gap:10px;align-items:center;background:rgba(229,57,53,.10);border:1px solid rgba(229,57,53,.45);border-radius:12px;padding:14px;color:#ff8a80;font-size:14.5px;font-weight:700}
 .op-reco-ic{font-size:30px}
 .op-reco-t{font-weight:800;font-size:15px;color:#ffb300}
 .op-reco-d{color:var(--txt);font-size:13.5px;margin-top:4px;line-height:1.5}
@@ -140,6 +141,10 @@ canvas{max-width:100%}
           <div class="op-reco-d" id="opRecoD">Chargez le dossier des fichiers de vibration puis lancer l'analyse.</div>
         </div>
       </div>
+    </div>
+
+    <div class="op-alert" id="opAlert" style="display:none">
+      &#9888;&#65039; <span id="opAlertTxt">Perte de signal capteur d&eacute;tect&eacute;e sur les derni&egrave;res lectures.</span>
     </div>
   </div>
   </div>
@@ -306,12 +311,20 @@ function runOp(){
     if(!_opPreds) _opPreds=inferSerie(rms, OFFSET);
     var preds=_opPreds, trueR=_opTrue;
     var labels=DATA.dates.slice(0, rms.length);
-    // ETAT ACTUEL = derniere observation reelle de la serie (dernier point au-dessus du bruit)
-    var FLOOR=1e-2, ip=-1;
-    for(var i=rms.length-1;i>=0;i--){ if(rms[i]>FLOOR){ ip=i; break; } }
+    // ETAT ACTUEL = dernier segment VALIDE (sig capteur present, RMS >= seuil anomalie)
+    var SEUIL=0.01, ip=-1;
+    for(var i=rms.length-1;i>=0;i--){ if(rms[i]>=SEUIL){ ip=i; break; } }
+    // alerte capteur : nb de segments finaux sous le seuil
+    var lostTail=0;
+    for(var j=rms.length-1;j>=0;j--){ if(rms[j]<SEUIL){ lostTail++; } else break; }
+    var al=document.getElementById('opAlert');
+    if(al){
+      if(lostTail>0){ al.style.display='flex'; if(lostTail>1){ document.getElementById('opAlertTxt').textContent='Perte de signal capteur détectée sur les '+lostTail+' dernières lectures — vérifier le capteur.'; } else { document.getElementById('opAlertTxt').textContent='Perte de signal capteur détectée sur la dernière lecture — vérifier le capteur.'; } }
+      else al.style.display='none';
+    }
     if(ip<0) ip=rms.length-1;
     var curRms=rms[ip];
-    // RUL predite pour ce point final
+    // RUL predite pour ce dernier segment valide
     var pk=ip-OFFSET;
     var ruling=preds.length? Math.max(0,preds[Math.min(Math.max(pk,0),preds.length-1)]) : 0;
     if(isNaN(ruling)||!isFinite(ruling)) ruling=0;
@@ -322,43 +335,6 @@ function runOp(){
     setTimeout(function(){ if(chOpRms)chOpRms.resize(); if(chOpRul)chOpRul.resize(); }, 120);
   }catch(e){
     setErr('Erreur d’analyse : '+e.message);
-  }
-}
-function handleFolderFiles(files){
-  var list=[];
-  for(var i=0;i<files.length;i++) list.push(files[i]);
-  // tri lexicographique (noms = dates ISO => ordre chronologique)
-  list.sort(function(a,b){ return a.name===b.name?0:(a.name<b.name?-1:1); });
-  var delt=document.getElementById('opDelt');
-  if(delt){ delt.style.display='block'; delt.style.opacity=.8; }
-  document.getElementById('opDeltN').textContent='0 / '+list.length;
-  var rms=[], idx=0;
-  var btn0=document.getElementById('opAnalyseBtn');
-  if(btn0){ btn0.style.display='inline-flex'; btn0.disabled=true; }
-  var none=document.getElementById('opNone');
-  if(none){ none.style.display='block'; none.textContent='Lecture des fichiers en cours &#8230;'; }
-  function next(){
-    if(idx>=list.length){ finishImport(rms); return; }
-    document.getElementById('opDeltN').textContent=(idx+1)+' / '+list.length;
-    if(none)none.textContent='Lecture des fichiers en cours &#8230; ('+(idx+1)+'/'+list.length+')';
-    var f=list[idx];
-    var rd=new FileReader();
-    rd.onload=function(){ rms.push(computeRmsTxt(rd.result)); idx++; next(); };
-    rd.onerror=function(){ rms.push(0); idx++; next(); };
-    rd.readAsText(f);
-  }
-  next();
-  function finishImport(serie){
-    _opRmsSerie=serie;
-    _opPreds=inferSerie(serie, OFFSET);
-    _opTrue=null;
-    document.getElementById('opDeltN').textContent=serie.length;
-    document.getElementById('opDeltM').textContent=computeMoy(serie);
-    if(none)none.style.display='none';
-    if(delt)delt.style.opacity=1;
-    if(btn0){ btn0.style.display='inline-flex'; btn0.disabled=false; }
-    var res=document.getElementById('opResults'); if(res)res.style.display='block';
-    runOp();
   }
 }
 function computeMoy(){ return '20 480'; }
@@ -423,6 +399,7 @@ function handleFolderFiles(files){
     if(none)none.style.display='none';
     if(delt)delt.style.opacity=1;
     if(btn0){ btn0.style.display='inline-flex'; btn0.disabled=false; }
+    var al3=document.getElementById('opAlert'); if(al3)al3.style.display='none';
     var res=document.getElementById('opResults'); if(res)res.style.display='block';
     runOp();
   }

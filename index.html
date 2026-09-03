@@ -276,7 +276,8 @@ function renderSummary(rms, rul, index){
   document.getElementById('opStatus').className='op-status '+s[2];
   document.getElementById('opRms').textContent=fmtFR(rms.toFixed(4));
   document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2));
-  document.getElementById('opRulUnit').textContent='jour(s)';
+  if(rul<1 && rul>0){ document.getElementById('opRulUnit').textContent='jour(s) soit \u2248 '+Math.max(1,Math.round(rul*24))+' h'; }
+  else { document.getElementById('opRulUnit').textContent='jour(s)'; }
   document.getElementById('opRisk').textContent=s[3];
   document.getElementById('opRiskUnit').textContent=(s[3]==='\u00C9LEV\u00C9')?'de panne / arr\u00EAt requis':((s[3]==='MOYEN')?'vers le seuil alerte':'sous le seuil');
   document.getElementById('opRecoIc').textContent=s[0];

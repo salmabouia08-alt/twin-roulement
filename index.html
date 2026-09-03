@@ -52,6 +52,8 @@ canvas{max-width:100%}
 .okpi-val{font-size:28px;font-weight:800;color:#fff}
 .okpi-risk{color:#ffb300}
 .okpi-unit{font-size:12px;color:var(--mut);margin-top:4px}
+.op-metainfo{margin:12px 0 0;text-align:center;font-size:13px;color:var(--mut);background:rgba(15,26,34,.4);border:1px solid var(--line);border-radius:10px;padding:10px}
+.op-threshold{margin-top:10px;text-align:center;font-size:12.5px;color:var(--mut)}
 .op-chart{position:relative;height:300px}
 .op-chart canvas{display:block;width:100%!important;height:100%!important}
 .op-reco{display:flex;gap:14px;align-items:center;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.3);border-radius:12px;padding:16px}
@@ -122,11 +124,13 @@ canvas{max-width:100%}
           <div class="okpi-unit" id="opRiskUnit">&mdash;</div>
         </div>
       </div>
+      <div class="op-metainfo" id="opMetaInfo" style="display:none">&mdash;</div>
     </div>
 
     <div class="op-panel">
       <h3 class="op-h">&#128200; &Eacute;VOLUTION DU RMS</h3>
       <div class="op-chart"><canvas id="opRmsChart"></canvas></div>
+      <div class="op-threshold" id="opThreshold">&mdash;</div>
     </div>
     <div class="op-panel">
       <h3 class="op-h">&#128201; PR&Eacute;DICTION DE LA RUL</h3>
@@ -335,6 +339,15 @@ function runOp(){
     var st2=document.getElementById('opDeltState'); if(st2)st2.textContent='analysées';
     drawCharts(rms, preds, labels, trueR);
     renderSummary(curRms||0, ruling, ip);
+    // metadonnees : date de la derniere acquisition valide + seuil d'alerte
+    var met=document.getElementById('opMetaInfo');
+    if(met){
+      var dlab=(labels&&labels.length)? (labels[Math.min(Math.max(ip,0),labels.length-1)]||'') : '';
+      met.style.display='block';
+      met.textContent='Analyse réalisée sur la dernière acquisition valide : '+(dlab||'indisponible');
+    }
+    var thr=document.getElementById('opThreshold');
+    if(thr){ thr.textContent='Seuil d’alerte RMS : '+fmtFR(ALERT.toFixed(4))+' — au-delà, dégradation détectée.'; }
     // re-taille differee pour garantir le rendu du canvas apres l'affichage
     setTimeout(function(){ if(chOpRms)chOpRms.resize(); if(chOpRul)chOpRul.resize(); }, 120);
   }catch(e){

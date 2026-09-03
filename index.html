@@ -119,7 +119,7 @@ canvas{max-width:100%}
         <div class="okpi">
           <div class="okpi-lbl">Niveau de risque</div>
           <div class="okpi-val okpi-risk" id="opRisk">&mdash;</div>
-          <div class="okpi-unit">&mdash;</div>
+          <div class="okpi-unit" id="opRiskUnit">&mdash;</div>
         </div>
       </div>
     </div>
@@ -278,6 +278,7 @@ function renderSummary(rms, rul, index){
   document.getElementById('opRul').textContent=fmtFR(rul.toFixed(2));
   document.getElementById('opRulUnit').textContent='jour(s)';
   document.getElementById('opRisk').textContent=s[3];
+  document.getElementById('opRiskUnit').textContent=(s[3]==='\u00C9LEV\u00C9')?'de panne / arr\u00EAt requis':((s[3]==='MOYEN')?'vers le seuil alerte':'sous le seuil');
   document.getElementById('opRecoIc').textContent=s[0];
   if(rul<=0.1){ document.getElementById('opRecoT').textContent='Panne imminente.'; document.getElementById('opRecoD').textContent='Arr\u00EAt recommand\u00E9 rapidement pour \u00E9viter la casse du roulement.'; }
   else if(rul<=2.0){ document.getElementById('opRecoT').textContent='D\u00E9gradation d\u00E9tect\u00E9e.'; document.getElementById('opRecoD').textContent='Pr\u00E9voir une inspection du roulement.'; }
